@@ -611,4 +611,32 @@ defmodule Ecto.Integration.PreloadTest do
   defp sort_by_id(values) do
     Enum.sort_by(values, &(&1.id))
   end
+
+  @tag :focus
+  test "preload - foreign key from select_merge map - select specific fields" do
+    p1 = TestRepo.insert!(%Post{title: "p1"})
+    TestRepo.insert!(%Comment{text: "c1", post: p1})
+
+    comments =
+      from(c in Comment, select: struct(c, [:text]))
+      |> select_merge([c], %{post_id: c.post_id})
+      |> preload(:post)
+      |> TestRepo.all()
+
+    assert [%{text: "c1", post: %{title: "p1"}}] = comments
+  end
+
+  @tag :focus
+  test "preload - foreign key from select_merge list - select all fields" do
+    p1 = TestRepo.insert!(%Post{title: "p1"})
+    TestRepo.insert!(%Comment{text: "c1", post: p1})
+
+    comments =
+      from(c in Comment, select: c)
+      |> select_merge([c], [:post_id])
+      |> preload(:post)
+      |> TestRepo.all()
+
+    assert [%{text: "c1", post: %{title: "p1"}}] = comments
+  end
 end
