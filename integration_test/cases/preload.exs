@@ -627,6 +627,34 @@ defmodule Ecto.Integration.PreloadTest do
   end
 
   @tag :focus
+  test "preload - foreign key from select_merge map - select specific fields as struct" do
+    p1 = TestRepo.insert!(%Post{title: "p1"})
+    TestRepo.insert!(%Comment{text: "c1", post: p1})
+
+    comments =
+      from(c in Comment, select: %Comment{text: c.text})
+      |> select_merge([c], %{post_id: c.post_id})
+      |> preload(:post)
+      |> TestRepo.all()
+
+    assert [%{text: "c1", post: %{title: "p1"}}] = comments
+  end
+
+  @tag :focus
+  test "preload - foreign key from select_merge list - select specific fields as struct" do
+    p1 = TestRepo.insert!(%Post{title: "p1"})
+    TestRepo.insert!(%Comment{text: "c1", post: p1})
+
+    comments =
+      from(c in Comment, select: %Comment{text: c.text})
+      |> select_merge([c], [:post_id])
+      |> preload(:post)
+      |> TestRepo.all()
+
+    assert [%{text: "c1", post: %{title: "p1"}}] = comments
+  end
+
+  @tag :focus
   test "preload - foreign key from select_merge list - select all fields" do
     p1 = TestRepo.insert!(%Post{title: "p1"})
     TestRepo.insert!(%Comment{text: "c1", post: p1})
